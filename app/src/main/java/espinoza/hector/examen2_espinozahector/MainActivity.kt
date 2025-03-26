@@ -21,8 +21,7 @@ import androidx.core.view.WindowInsetsCompat
 
 class MainActivity : AppCompatActivity() {
 
-    var adapter: ContactoAdapter? = null
-
+    private var adapter: ContactoAdapter? = null
     private val REQUEST_CODE_ADD_CONTACT = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,10 +31,10 @@ class MainActivity : AppCompatActivity() {
 
         val agregarContacto: Button = findViewById(R.id.btn_agregar_contacto)
 
-        // Obtener la lista de contactos desde el singleton
+        ContactoLista.cargarContactos(this)
+
         val listaContactos = ContactoLista.obtenerContactos()
 
-        // Crear el adaptador y asignarlo al ListView
         adapter = ContactoAdapter(listaContactos, this)
 
         val listView: ListView = findViewById(R.id.vista_contactos)
@@ -45,17 +44,12 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, AgregarContactoActivity::class.java)
             startActivityForResult(intent, REQUEST_CODE_ADD_CONTACT)
         }
-
-
-
-
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == REQUEST_CODE_ADD_CONTACT && resultCode == RESULT_OK) {
-
             val nombre = data?.getStringExtra("nombre") ?: ""
             val apellido = data?.getStringExtra("apellido") ?: ""
             val telefono = data?.getStringExtra("telefono") ?: ""
@@ -63,25 +57,17 @@ class MainActivity : AppCompatActivity() {
             val compania = data?.getStringExtra("compania") ?: ""
             val colorPerfil = ContextCompat.getColor(this, R.color.red)
 
-
             val nuevoContacto = Contacto(nombre, apellido, compania, email, telefono, colorPerfil)
 
+            ContactoLista.agregarContacto(nuevoContacto)
 
-            ContactoLista
-
-            // Actualizar el adaptador
             adapter?.notifyDataSetChanged()
         }
     }
-
-
-
-
-
 }
 
 
-class ContactoAdapter(val contactos: List<Contacto>, val context: Context) : BaseAdapter() {
+class ContactoAdapter(var contactos: List<Contacto>, val context: Context) : BaseAdapter() {
 
     override fun getCount(): Int {
         return contactos.size
@@ -112,7 +98,10 @@ class ContactoAdapter(val contactos: List<Contacto>, val context: Context) : Bas
         val deleteButton: ImageView = vista.findViewById(R.id.delete)
 
         deleteButton.setOnClickListener {
-            // Aquí puedes agregar lógica de eliminación si es necesario
+            ContactoLista.eliminarContacto(contacto)
+            contactos = ContactoLista.obtenerContactos()
+            notifyDataSetChanged()
+
         }
 
         imageProfile.setOnClickListener {
